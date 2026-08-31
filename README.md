@@ -233,23 +233,7 @@ Remediate
 
 ---
 
-# 📊 SOC Skills Demonstrated
 
-- Wazuh SIEM deployment and monitoring
-- Wazuh Agent and Manager configuration
-- Sysmon deployment and telemetry collection
-- Windows Security Event Log analysis
-- RDP attack detection
-- Authentication investigation
-- PowerShell activity analysis
-- Endpoint activity monitoring
-- MITRE ATT&CK mapping
-- Alert investigation and correlation
-- Attack timeline reconstruction
-- Incident response planning
-- Wazuh dashboard and visualization development
-
----
 
 # 📋 Key Windows Events
 
@@ -264,40 +248,5 @@ Remediate
 
 ---
 
-# 🧪 Lab Safety
 
-All testing was performed inside an isolated **VirtualBox Host-Only network**.
 
-The simulated attacks were directed only against the Windows 10 Pro laboratory VM and were not performed against production systems, external systems, or the physical host.
-
----
-
-# 🏁 Final Result
-
-This Home SOC Lab demonstrated a complete Windows attack investigation, starting with an RDP brute-force attempt and progressing through successful authentication, PowerShell execution, discovery, scheduled-task activity, and event-log clearing.
-
-Wazuh and Sysmon provided the telemetry required to detect and investigate the different stages of the attack, while MITRE ATT&CK was used to classify the observed behaviors.
-
-### Final Attack Flow
-
-```text
-RDP Brute Force
-       ↓
-Credential Recovery
-       ↓
-Successful RDP
-       ↓
-PowerShell
-       ↓
-Account/System Discovery
-       ↓
-Scheduled Task Activity
-       ↓
-Event Log Clearing
-       ↓
-Investigation
-       ↓
-Incident Response
-```
-
-**Status: Detection successfully validated and incident investigation completed.**
