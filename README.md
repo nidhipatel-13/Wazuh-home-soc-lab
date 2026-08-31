@@ -47,22 +47,22 @@ DESKTOP-SS2VKH0
 ```text
 RDP Brute Force
        ↓
-Credential Recovery
+Gaining Access
        ↓
 Successful RDP Authentication
        ↓
-PowerShell Execution
+Post-Access Activity
        ↓
-Account/System Discovery
+Covering Tracks
        ↓
-Windows Event Log Clearing
+Incident Reporting
 ```
 
 ---
 
 # 🔎 Detection & Investigation
 
-## 1. RDP Brute-Force Attack
+## 1. Brute-Force Attack
 
 Hydra was used from the Kali Linux VM to perform a controlled credential-guessing attack against the Windows RDP service.
 
@@ -80,11 +80,9 @@ hydra -L user.txt -P password.txt rdp://192.168.240.4
 - **Event:** 4625 — Failed Logon
 - **MITRE:** T1110 — Brute Force
 
----
+### 2. Gaining Access
 
-## 2. Successful RDP Login
-
-The recovered credentials were used to establish an RDP session.
+A controlled RDP brute-force attack was performed using Hydra. Valid credentials were recovered and used to establish a successful RDP session.
 
 - **Event:** 4624 — Successful Logon
 - **Logon Type:** 10 — RemoteInteractive
@@ -92,48 +90,32 @@ The recovered credentials were used to establish an RDP session.
 - **User:** `WORKGROUP\nidhi`
 - **MITRE:** T1021.001, T1078.003
 
----
+### 3. Post-Access Activity
 
-## 3. PowerShell Execution
+PowerShell was executed after gaining RDP access, followed by account and system discovery activities.
 
-PowerShell was executed after the successful RDP login.
-
-powershell
-powershell.exe -Command "whoami"
 - **Sysmon Event:** 1 — Process Create
 - **Wazuh Rule:** 92027
 - **MITRE:** T1059.001 — PowerShell
-
----
-
-## 4. Account & System Discovery
-
-PowerShell was used to perform account and system discovery.
-
-- **Wazuh Rules:** 92033 / 92031
+- **Discovery Rules:** 92033 / 92031
 - **MITRE:** T1087 — Account Discovery
 
----
+### 4. Covering Tracks
 
-## 5. Scheduled Task Activity
+The Windows Application event log was cleared using `wevtutil`, simulating an attempt to remove forensic evidence.
 
-Scheduled-task-related activity was detected during the post-access phase.
+- **Event:** 104 — Application Log Cleared
+- **Wazuh Rule:** 63104
+- **User:** `nidhi`
+- **MITRE:** T1070.004 — Clear Windows Event Logs
 
-- **Wazuh Rule:** 92154
-- **Telemetry:** `taskschd.dll`
-- **MITRE:** T1053.005 — Scheduled Task/Job
+### 5. Reporting
 
----
+Wazuh alerts and Windows/Sysmon telemetry were reviewed, correlated, mapped to MITRE ATT&CK, and documented as an incident.
 
-## 6. Event Log Clearing
 
-The Windows Application log was cleared using:
 
-```powershell
-wevtutil cl Application
----
-
-# 🧠 MITRE ATT&CK Mapping
+### 🧠 MITRE ATT&CK Mapping
 
 | Activity | MITRE Technique | ID | Wazuh Rule / Event |
 |---|---|---|---|
@@ -147,106 +129,6 @@ wevtutil cl Application
 
 ---
 
-# 🔗 Attack Investigation & Correlation
-
-The individual events were investigated together using common attributes such as:
-
-- Source IP
-- Target IP
-- Username
-- Logon Type
-- Event timestamps
-- Sequence of activity
-
-### Attack Timeline
-
-```text
-Kali Linux
-192.168.240.3
-       │
-       ▼
-RDP Failed Logons
-Event 4625
-       │
-       ▼
-Valid Credentials Recovered
-nidhi / nidhi
-       │
-       ▼
-Successful RDP Login
-Event 4624
-Logon Type 10
-       │
-       ▼
-PowerShell
-Sysmon Event 1
-       │
-       ▼
-Discovery Activity
-       │
-       ▼
-Scheduled Task Activity
-       │
-       ▼
-Application Log Cleared
-Event 104
-```
-
-The matching host, account, source address, and chronological sequence allowed the events to be investigated as a connected attack scenario.
-
----
-
-# 🛡️ Incident Response
-
-Recommended response actions for this type of incident include:
-
-- Reset or disable the compromised account
-- Terminate active RDP sessions
-- Investigate the endpoint for suspicious processes and files
-- Check for newly created scheduled tasks and persistence mechanisms
-- Enable account lockout protections
-- Enable Network Level Authentication (NLA) for RDP
-- Restrict RDP access through VPNs or controlled jump hosts
-- Use MFA for remote access where supported
-- Preserve Windows Security and Sysmon logs
-- Isolate the endpoint if malicious activity is confirmed
-
-### Response Workflow
-
-```text
-Detection
-   ↓
-Validate Alert
-   ↓
-Investigate Events
-   ↓
-Identify Compromised Account
-   ↓
-Contain Access
-   ↓
-Check for Persistence
-   ↓
-Preserve Evidence
-   ↓
-Remediate
-```
-
----
-
-
-
-# 📋 Key Windows Events
-
-| Event ID | Description | Purpose |
-|---|---|---|
-| **4624** | Successful Logon | Detect successful authentication |
-| **4625** | Failed Logon | Detect failed authentication / brute force |
-| **4634** | Logoff | Identify session termination |
-| **104** | Event Log Cleared | Detect log-clearing activity |
-| **4698** | Scheduled Task Created | Detect scheduled task creation |
-| **Sysmon 1** | Process Create | Monitor process execution |
-
----
 
 
 
