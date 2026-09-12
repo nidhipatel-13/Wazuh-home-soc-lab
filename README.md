@@ -19,7 +19,8 @@ Target + Wazuh Agent
 DESKTOP-SS2VKH0
         │
         ├── Windows Security Logs
-        └── Sysmon Telemetry
+        ├── Sysmon Telemetry
+        └── FIM (File + Registry Monitoring)
                  │
                  ▼
            Wazuh Manager
@@ -113,7 +114,42 @@ The Windows Application event log was cleared using `wevtutil`, simulating an at
 
 Wazuh alerts and Windows/Sysmon telemetry were reviewed, correlated, mapped to MITRE ATT&CK, and documented as an incident.
 
+### 6. File Integrity Monitoring (FIM)
 
+To extend detection beyond the initial attack chain, File Integrity Monitoring was configured to detect both file-system and Windows Registry tampering.
+
+**Configuration:**
+```xml
+<syscheck>
+  <disabled>no</disabled>
+  <frequency>10</frequency>
+  <directories>C:\Users\Public</directories>
+  <windows_registry>HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run</windows_registry>
+</syscheck>
+```
+
+#### File-level test
+
+A file (`malware.txt`) was created inside `C:\Users\Public\Pictures` to simulate a dropped payload.
+
+- **Event:** File added to the system
+- **Wazuh Rule:** 554
+- **Path:** `c:\users\public\pictures\malware.txt`
+
+#### Registry persistence test
+
+A registry Run key was added and removed to simulate a classic malware persistence technique.
+
+```powershell
+New-ItemProperty -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "testpersistence" -Value "C:\test.exe"
+Remove-ItemProperty -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "testpersistence"
+```
+
+- **Event:** Registry Value Entry Added to the System / Registry Value Entry Deleted
+- **Wazuh Rules:** 752 (added), 751 (deleted), 750 (modified), 594 (key checksum changed)
+- **MITRE:** T1547.001 — Registry Run Keys / Startup Folder
+
+**Observations:** Both file and registry changes were detected and logged with full context — including path, event type, and rule classification — confirming Wazuh's FIM module correctly captured unauthorized file drops and persistence-style registry modifications on the compromised endpoint.
 
 ### 🧠 MITRE ATT&CK Mapping
 
@@ -126,6 +162,8 @@ Wazuh alerts and Windows/Sysmon telemetry were reviewed, correlated, mapped to M
 | Account Discovery | Account Discovery | T1087 | 92033 / 92031 |
 | Scheduled Task Activity | Scheduled Task/Job | T1053.005 | 92154 |
 | Event Log Clearing | Indicator Removal: Clear Windows Event Logs | T1070.004 | 63104 / Event 104 |
+| File Drop (Simulated Payload)  | Ingress Tool Transfer                       | T1105     | Rule 554           |
+| Registry Persistence           | Registry Run Keys / Startup Folder          | T1547.001 | Rules 750/751/752  |
 
 ---
 
