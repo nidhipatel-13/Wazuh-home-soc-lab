@@ -151,6 +151,47 @@ Remove-ItemProperty -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run" 
 
 **Observations:** Both file and registry changes were detected and logged with full context — including path, event type, and rule classification — confirming Wazuh's FIM module correctly captured unauthorized file drops and persistence-style registry modifications on the compromised endpoint.
 
+### 7. Custom Detection Rules
+
+#### Rule 100101 — Windows Firewall Disabled
+
+Detects when the Windows Firewall is disabled across any profile, a common defense-evasion technique used to allow follow-on attack traffic through.
+
+```xml
+<group name="windows,firewall,windows_firewall,">
+
+  <rule id="100101" level="12">
+    <if_sid>67005</if_sid>
+    <description>MYRULE: Windows Firewall has been disabled</description>
+    <mitre>
+      <id>T1562.004</id>
+    </mitre>
+    <group>firewall_disable,defense_evasion,</group>
+  </rule>
+
+</group>
+```
+
+#### Rule 100102 — Security Audit Log Cleared
+
+Detects clearing of the Windows Security event log — the log that records authentication and logon activity, making this a strong indicator of anti-forensics/log-tampering behavior following a compromise.
+
+```xml
+<group name="windows,security_log,log_tampering,log_clearing_auditlog,windows_log,">
+
+  <rule id="100102" level="12">
+    <if_sid>63103</if_sid>
+    <field name="win.system.eventID">^1102$</field>
+    <description>MYRULE: Windows Security audit log was cleared</description>
+    <mitre>
+      <id>T1070.001</id>
+    </mitre>
+    <group>log_tampering,defense_evasion,</group>
+  </rule>
+
+</group>
+```
+
 ### 🧠 MITRE ATT&CK Mapping
 
 | Activity | MITRE Technique | ID | Wazuh Rule / Event |
@@ -164,6 +205,8 @@ Remove-ItemProperty -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run" 
 | Event Log Clearing | Indicator Removal: Clear Windows Event Logs | T1070.004 | 63104 / Event 104 |
 | File Drop (Simulated Payload)  | Ingress Tool Transfer                       | T1105     | Rule 554           |
 | Registry Persistence           | Registry Run Keys / Startup Folder          | T1547.001 | Rules 750/751/752  |
+| Firewall Disabled              | Disable or Modify System Firewall           | T1562.004 | Rule 100101         |
+| Security Log Cleared           | Indicator Removal: Clear Windows Event Logs | T1070.001 | Rule 100102         |
 
 ---
 
