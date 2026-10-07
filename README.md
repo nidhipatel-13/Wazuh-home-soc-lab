@@ -48,9 +48,9 @@ DESKTOP-SS2VKH0
 ```text
 RDP Brute Force
        ↓
-Gaining Access
-       ↓
 Successful RDP Authentication
+       ↓
+Gaining Access
        ↓
 Post-Access Activity
        ↓
